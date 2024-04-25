@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 
 import matplotlib.pyplot as plt
 
-from psplines import get_uniform_knot_vector, optimization_expression, optimization_OOP, get_function_control_points
+from psplines import get_uniform_knot_vector, univariate_optimization_loss, get_spline_function_control_points
 
 # Clamped LSQ Univariate example
 # Given a set of noisy data {(x_i, f(x_i))}, our aim is to approximate the function f: [a,b] -> R
@@ -58,7 +58,6 @@ print('-'*30)
 n = 30 #Since high frequency is going to be penalized, let us provide more degrees of freedom.
 l = 1e1 #Penalty to second derivative
 t_pspl = get_uniform_knot_vector(a, b, n, mode='complete', k=k)
-Bx = BSpline.design_matrix(x=x, t=t_pspl, k=k).toarray() #The evaluation of the Basis splines at the domain.
 n_coeff = n+(k+1)
 x0 = np.array([y.mean()]*n_coeff)
 
@@ -69,9 +68,7 @@ cons = [
     {'type':'eq', 'fun': lambda c: BSpline.construct_fast(t_pspl, c, k)(b, nu=1) - fd(b)}
 ]
 
-#res = minimize(fun=optimization_expression, x0=x0, args=(y, Bx, 0.0),
-res = minimize(fun=optimization_OOP, x0=x0, args=(x, y, t_pspl, k, l),
-#                    method='L-BFGS-B', constraints=cons)
+res = minimize(fun=univariate_optimization_loss, x0=x0, args=(x, y, t_pspl, k, l),
                     method='SLSQP', constraints=cons)
 
 pspl = BSpline(t=t_pspl, c=res.x, k=k)
@@ -86,7 +83,7 @@ print('-'*30)
 fg, ax = plt.subplots(3, 1)
 ax[0].scatter(x, y, label='Data set')
 ax[0].plot(x, f(x), 'k--', label='f')
-spl_cp = get_function_control_points(knots=t_spl, coeff=spl.c, k=3)
+spl_cp = get_spline_function_control_points(knots=t_spl, coeff=spl.c, k=3)
 ax[0].plot(x, spl(x), 'r', label='spl')
 ax[0].plot(spl_cp[0], spl_cp[1], 'ro', linestyle='--', mfc='none', label='spl control polygon')
 ax[0].legend()
@@ -94,7 +91,7 @@ ax[0].legend()
 
 ax[1].scatter(x, y, label='Data set')
 ax[1].plot(x, f(x), 'k--', label='f')
-pspl_cp = get_function_control_points(knots=t_pspl, coeff=pspl.c, k=3)
+pspl_cp = get_spline_function_control_points(knots=t_pspl, coeff=pspl.c, k=3)
 ax[1].plot(x, pspl(x), 'g', label='P-spline')
 ax[1].plot(pspl_cp[0], pspl_cp[1], 'go', linestyle='--', mfc='none', label='pspl control polygon')
 ax[1].legend()
