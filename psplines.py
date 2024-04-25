@@ -197,7 +197,7 @@ def optimization_expression(coeffs, y, Bx, l=0.0):
 
     err = ((y - Bx @ coeffs.reshape(-1, 1))**2).sum()
     if l:
-        err += l*(finite_differences(coeffs, order=2, mode='forward')**2).sum()
+        err += l*(np.convolve(coeffs, [1, -2, 1], mode='valid')**2).sum()
 
     return err
 #
