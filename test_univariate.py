@@ -22,15 +22,19 @@ from psplines import get_uniform_knot_vector, optimization_expression, optimizat
 # points clean, so that we have an approximation of f(a), f'(a), f(b) and f'(b) (using finite
 # differences for the derivatives).
 
-N    = 201
-eps  = 1e-1
-k    = 3
-#a, b = 0.05, 5
-#f  = np.log
-#fd = lambda x: 1/x
-a, b = 0, 6
-f  = np.sin
-fd = np.cos
+N    = 201  #Number of samples
+eps  = 1e-1 #Noise magnitud
+k    = 3    #Spline degree
+
+########To play with logarithm leave these lines uncomented
+a, b = 0.05, 5
+f  = np.log
+fd = lambda x: 1/x
+
+########To play with sinus uncomment these lines
+#a, b = 0, 6
+#f  = np.sin
+#fd = np.cos
 
 x = np.linspace(a, b, N)
 y = f(x)
