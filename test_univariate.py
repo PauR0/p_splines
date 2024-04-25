@@ -63,10 +63,10 @@ n_coeff = n+(k+1)
 x0 = np.array([y.mean()]*n_coeff)
 
 cons = [
-    {'type':'eq', 'fun': lambda c: BSpline(t_pspl, c, k)(a) - f(a)},
-    {'type':'eq', 'fun': lambda c: BSpline(t_pspl, c, k)(b) - f(b)},
-    {'type':'eq', 'fun': lambda c: BSpline(t_pspl, c, k)(a, nu=1) - fd(a)},
-    {'type':'eq', 'fun': lambda c: BSpline(t_pspl, c, k)(b, nu=1) - fd(b)}
+    {'type':'eq', 'fun': lambda c: BSpline.construct_fast(t_pspl, c, k)(a) - f(a)},
+    {'type':'eq', 'fun': lambda c: BSpline.construct_fast(t_pspl, c, k)(b) - f(b)},
+    {'type':'eq', 'fun': lambda c: BSpline.construct_fast(t_pspl, c, k)(a, nu=1) - fd(a)},
+    {'type':'eq', 'fun': lambda c: BSpline.construct_fast(t_pspl, c, k)(b, nu=1) - fd(b)}
 ]
 
 #res = minimize(fun=optimization_expression, x0=x0, args=(y, Bx, 0.0),
