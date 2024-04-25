@@ -1,9 +1,9 @@
 
 
 import numpy as np
-from scipy.interpolate import BSpline
-from scipy.linalg import pascal
 
+from scipy.ndimage import laplace
+from scipy.interpolate import BSpline, BivariateSpline
 
 
 def get_uniform_knot_vector(xb, xe, n, mode='internal', k=3, ext=None):
@@ -84,13 +84,11 @@ def get_uniform_knot_vector(xb, xe, n, mode='internal', k=3, ext=None):
     return t
 #
 
-def optimization_expression(coeffs, y, Bx, l=0.0):
+def univariate_optimization_loss(coeffs, x, y, t, k, l):
     """
     Function to compute the expression to be optimized.
 
-    Parameter l allows to penalized the curvature of the approximation by adding the 2 order forward finite diference of the coefficients.
-
-    :math:`min_{\theta_j \in \mathbb{R}}\sum_{i=0}^N (y_i - \sum_{j=0}^m c_j*B_{j,3,t}(x))^2 + \lambda (\sum_{j=k}^{m}c_j-2c_{j-1}+c_{j-2})`
+    Parameter l allows to penalize the curvature of the approximation by adding the 2 order forward finite diference of the coefficients.
 
     Arguments
     ---------
@@ -110,24 +108,28 @@ def optimization_expression(coeffs, y, Bx, l=0.0):
             The evaluation of the error expression to be minimized.
     """
 
-    err = ((y - Bx @ coeffs.reshape(-1, 1))**2).sum()
+    spl = BSpline.construct_fast(t=t, c=coeffs, k=k)
+    err = ((y - spl(x))**2).sum()
     if l:
         err += l*(np.convolve(coeffs, [1, -2, 1], mode='valid')**2).sum()
 
     return err
 #
 
-def optimization_OOP(coeffs, x, y, t, k, l):
+def bivariate_optimization_loss(coeffs, x, y, z, tx, ty, kx, ky, l):
 
+    bspl = BivariateSpline()
+    bspl.tck     = tx, ty, coeffs
+    bspl.degrees = kx, ky
 
-    err = ((y - BSpline.construct_fast(t, coeffs, k)(x))**2).sum()
+    err = ((z - bspl(x, y, grid=False))**2).sum()
     if l:
-        err += (finite_differences(coeffs, order=2, mode='forward')**2).sum()
+        err += l*(laplace(coeffs)**2).sum()
 
     return err
 #
 
-def get_function_control_points(knots, coeff, k, padded = True):
+def get_spline_function_control_points(knots, coeff, k, padded = True):
 
     """
     Compute the control points (t*_j,c_j)_j=1^n of a spline function
@@ -158,4 +160,38 @@ def get_function_control_points(knots, coeff, k, padded = True):
     t_ = [np.mean(knots[i+1 : i+k+1]) for i in range(len(coeff))]
     control_points = np.array((t_, coeff))
     return control_points
+#
+
+def get_bispline_function_control_points(tx, ty, C, kx, ky):
+
+    """
+    Compute the control points (tx*_i,ty*_j,c_ij)_i,j=1^n of a bivariate spline function
+    where c_ij are the coefficients and t*_k is the average position
+    of the knots for a given coefficient in each dimension.
+            tu*_k = (tu_{k+1}+...+tu_{k+ku+1}) / u = x,y
+
+    Arguments
+    ---------
+
+        tx, ty : np.array,
+            The knot vector of the given spline function.
+
+        C : np.array,
+            The coefficients of the given bivariate spline function.
+
+        kx, ky : int,
+            Degrees of the given spline function.
+
+    Returns
+    -------
+
+        control_points : np.array
+
+    """
+
+    x = np.array([tx[i+1:i+kx+1].mean() for i in range(C.shape[0])])
+    y = np.array([ty[i+1:i+ky+1].mean() for i in range(C.shape[1])])
+    X, Y = np.meshgrid(x, y)
+
+    return X, Y, C.T
 #
