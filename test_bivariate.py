@@ -85,9 +85,9 @@ tck = lambda coeff: (tx_pspl, ty_pspl, coeff, kx, ky)
 column = lambda coeff, col: coeff.reshape(nx+(kx+1), ny+(ky+1))[:,col]
 
 cons = [
-        {'type':'eq', 'fun': lambda c: column(c, 0) - column(c, -1)}, #Periodicity conditions
+        {'type':'eq', 'fun': lambda c: column(c, 0) - column(c, -3)}, #Periodicity conditions
         {'type':'eq', 'fun': lambda c: column(c, 1) - column(c, -2)}, #Periodicity conditions
-        {'type':'eq', 'fun': lambda c: column(c, 2) - column(c, -3)}, #Periodicity conditions
+        {'type':'eq', 'fun': lambda c: column(c, 2) - column(c, -1)}, #Periodicity conditions
     ]
 
 res = minimize(fun=bivariate_optimization_loss, x0=x0, args=(x, y, z, tx_pspl, ty_pspl, kx, ky, l),
